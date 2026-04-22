@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Cliente | Belleza & Estilo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7f6;
+        }
+
+        .navbar {
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-link {
+            color: #555;
+            font-weight: 500;
+        }
+
+            .nav-link:hover {
+                color: #d63384;
+            }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            transition: transform 0.3s;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+            }
+
+        .btn-salon {
+            background-color: #d63384;
+            color: white;
+            border-radius: 25px;
+            padding: 10px 20px;
+            border: none;
+        }
+
+            .btn-salon:hover {
+                background-color: #b02a6a;
+                color: white;
+            }
+
+        .status-badge {
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 0.8rem;
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg sticky-top mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'panel_cliente' %}" style="color: #d63384 !important;">
+                <i class="fas fa-spa me-2"></i>Belleza & Estilo
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'catalogo_servicios' %}">Servicios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3" href="{% url 'mis_citas' %}">Mis Citas</a>
+                    </li>
+                    <li class="nav-item ms-lg-3">
+                        <span class="navbar-text me-3 small">Hola, <strong>{{ user.username }}</strong></span>
+                        <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Cerrar Sesión">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show rounded-pill px-4" role="alert">
+            <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <section id="servicios" class="mb-5">
+            <h3 class="fw-bold mb-4">Nuestros Servicios</h3>
+            <div class="row g-4">
+                {% for servicio in servicios %}
+                <div class="col-md-4 col-lg-3">
+                    <div class="card h-100 shadow-sm p-3 text-center">
+                        <div class="mb-3">
+                            <div class="mb-3">
+                                {% if servicio.imagen %}
+                                <img src="{{ servicio.imagen.url }}" alt="{{ servicio.nombre }}" class="img-fluid rounded" style="height: 150px; object-fit: cover;">
+                                {% else %}
+                                <i class="fas fa-magic fa-2x" style="color: #d63384 !important;"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <h5 class="fw-bold">{{ servicio.nombre }}</h5>
+                        <p class="text-muted small">{{ servicio.descripcion|truncatechars:60 }}</p>
+                        <div class="mt-auto">
+                            <span class="d-block fw-bold mb-2 text-dark">${{ servicio.precio }}</span>
+                            <button class="btn btn-salon btn-sm w-100"
+                                    onclick="abrirModal('{{ servicio.id }}', '{{ servicio.nombre }}')">
+                                Agendar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section id="citas" class="mb-5">
+            <h3 class="fw-bold mb-4">Resumen de Citas</h3>
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Servicio</th>
+                                    <th>Fecha y Hora</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cita in citas %}
+                                <tr>
+                                    <td class="ps-4 fw-medium">{{ cita.servicio.nombre }}</td>
+                                    <td><i class="far fa-calendar me-2 text-muted"></i>{{ cita.fecha_hora|date:"d M, Y - h:i A" }}</td>
+                                    <td>
+                                        {% if cita.estado == 'P' %}
+                                        <span class="badge bg-warning text-dark status-badge">Pendiente</span>
+                                        {% elif cita.estado == 'C' %}
+                                        <span class="badge bg-success status-badge">Confirmada</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary status-badge">Finalizada</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-5 text-muted">
+                                        <i class="fas fa-calendar-minus fa-3x mb-3 d-block"></i>
+                                        No tienes citas programadas.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="text-end mt-3">
+                <a href="{% url 'mis_citas' %}" class="small text-decoration-none" style="color: #d63384;">Ver historial completo →</a>
+            </div>
+        </section>
+    </div>
+
+    <div class="modal fade" id="modalCita" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="{% url 'agendar_cita' %}" method="POST" class="modal-content">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Agendar <span id="nombreServicio" style="color: #d63384;"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="servicio" id="idServicio">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Selecciona Fecha y Hora</label>
+                        <input type="datetime-local" name="fecha_hora" id="fecha_input" class="form-control rounded-pill" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Notas adicionales</label>
+                        <textarea name="notas" class="form-control" style="border-radius: 15px;" rows="3" placeholder="¿Alguna indicación especial?"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-salon px-4">Confirmar Reserva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function abrirModal(id, nombre) {
+            document.getElementById('idServicio').value = id;
+            document.getElementById('nombreServicio').innerText = nombre;
+
+            // Bloqueo visual de fechas pasadas
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('fecha_input').min = now.toISOString().slice(0, 16);
+
+            const modalElement = document.getElementById('modalCita');
+            const instance = window.bootstrap.Modal.getOrCreateInstance(modalElement);
+            instance.show();
+        }
+    </script>
+</body>
+</html>
