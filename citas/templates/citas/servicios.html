@@ -10,44 +10,76 @@
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f4f7f6;
+            background-color: #f8f9fa;
         }
 
         .navbar {
             background-color: #ffffff;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
         .card-servicio {
             border: none;
             border-radius: 20px;
-            transition: 0.3s;
+            transition: all 0.3s ease;
             background: white;
             overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
 
             .card-servicio:hover {
                 transform: translateY(-10px);
-                box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+                box-shadow: 0 15px 35px rgba(214, 51, 132, 0.15);
             }
+
+        /* Estilo para la imagen del servicio */
+        .img-container {
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+            .img-container img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .price-overlay {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-weight: 700;
+            color: #d63384;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
 
         .btn-agendar {
             background-color: #d63384;
             color: white;
-            border-radius: 50px;
+            border-radius: 12px;
             border: none;
-            padding: 8px 25px;
+            padding: 12px;
+            font-weight: 600;
+            transition: 0.3s;
         }
 
             .btn-agendar:hover {
                 background-color: #b02a6a;
                 color: white;
+                box-shadow: 0 5px 15px rgba(176, 42, 106, 0.3);
             }
 
-        .price-tag {
+        .service-icon-placeholder {
+            height: 200px;
+            background: #ffe3f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: #d63384;
-            font-size: 1.25rem;
-            font-weight: 600;
         }
     </style>
 </head>
@@ -60,16 +92,16 @@
             </a>
             <div class="ms-auto">
                 <a href="{% url 'panel_cliente' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-4">
-                    <i class="fas fa-arrow-left me-2"></i>Volver a mis citas
+                    <i class="fas fa-calendar-alt me-2"></i>Mis citas
                 </a>
             </div>
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container pb-5">
         {% if messages %}
         {% for message in messages %}
-        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show rounded-pill px-4" role="alert">
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show rounded-3" role="alert">
             {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -77,27 +109,39 @@
         {% endif %}
 
         <div class="text-center mb-5">
-            <h2 class="fw-bold">Nuestros Servicios</h2>
-            <p class="text-muted">Selecciona el tratamiento ideal para ti y reserva tu espacio al instante.</p>
+            <h1 class="fw-bold">Nuestros Servicios</h1>
+            <p class="text-muted mx-auto" style="max-width: 600px;">Descubre el tratamiento perfecto para resaltar tu belleza. Reserva tu cita en menos de un minuto.</p>
         </div>
 
         <div class="row g-4">
             {% for servicio in servicios %}
             <div class="col-md-6 col-lg-4">
-                <div class="card-servicio p-4 h-100 d-flex flex-column">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="bg-light p-3 rounded-circle">
-                            <i class="fas fa-scissors fa-lg" style="color: #d63384;"></i>
+                <div class="card-servicio h-100 d-flex flex-column">
+                    <div class="img-container">
+                        {% if servicio.imagen %}
+                        <img src="{{ servicio.imagen.url }}" alt="{{ servicio.nombre }}">
+                        {% else %}
+                        <div class="service-icon-placeholder">
+                            <i class="fas fa-magic fa-3x"></i>
                         </div>
-                        <span class="price-tag">${{ servicio.precio }}</span>
+                        {% endif %}
+                        <div class="price-overlay">L. {{ servicio.precio }}</div>
                     </div>
-                    <h4 class="fw-bold">{{ servicio.nombre }}</h4>
-                    <p class="text-muted flex-grow-1">{{ servicio.descripcion }}</p>
-                    <button class="btn btn-agendar w-100 mt-3"
-                            onclick="abrirModal('{{ servicio.id }}', '{{ servicio.nombre }}')">
-                        Reservar ahora
-                    </button>
+
+                    <div class="p-4 d-flex flex-column flex-grow-1">
+                        <h4 class="fw-bold mb-2">{{ servicio.nombre }}</h4>
+                        <p class="text-muted small flex-grow-1">{{ servicio.descripcion }}</p>
+                        <button class="btn btn-agendar w-100"
+                                onclick="abrirModal('{{ servicio.id }}', '{{ servicio.nombre }}')">
+                            <i class="far fa-calendar-check me-2"></i>Agendar Ahora
+                        </button>
+                    </div>
                 </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-5">
+                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Próximamente tendremos servicios disponibles para ti.</p>
             </div>
             {% endfor %}
         </div>
@@ -105,26 +149,32 @@
 
     <div class="modal fade" id="modalCita" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form action="{% url 'agendar_cita' %}" method="POST" class="modal-content border-0 shadow" style="border-radius: 25px;">
+            <form action="{% url 'agendar_cita' %}" method="POST" class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
                 {% csrf_token %}
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold">Agendar <span id="nombreServicio" style="color: #d63384;"></span></h5>
+                    <h5 class="modal-title fw-bold">Reservar <span id="nombreServicio" style="color: #d63384;"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <input type="hidden" name="servicio" id="idServicio">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small">¿Cuándo quieres venir?</label>
-                        <input type="datetime-local" name="fecha_hora" id="fecha_input" class="form-control rounded-pill" required>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase">Fecha y Hora</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;"><i class="far fa-clock text-muted"></i></span>
+                            <input type="datetime-local" name="fecha_hora" id="fecha_input" class="form-control border-start-0" style="border-radius: 0 12px 12px 0;" required>
+                        </div>
+                        <div class="form-text mt-2">Selecciona un horario disponible.</div>
                     </div>
+
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">Notas (opcional)</label>
-                        <textarea name="notas" class="form-control" style="border-radius: 15px;" rows="3"></textarea>
+                        <label class="form-label fw-bold small text-uppercase">Notas Adicionales</label>
+                        <textarea name="notas" class="form-control" style="border-radius: 12px;" rows="3" placeholder="¿Algo que debamos saber?"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-agendar px-4">Confirmar Reserva</button>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-3 px-4 fw-bold text-muted" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-agendar px-5">Confirmar Reserva</button>
                 </div>
             </form>
         </div>
@@ -135,8 +185,12 @@
         function abrirModal(id, nombre) {
             document.getElementById('idServicio').value = id;
             document.getElementById('nombreServicio').innerText = nombre;
-            // Bloquear fechas pasadas en el modal
-            document.getElementById('fecha_input').min = new Date().toISOString().slice(0, 16);
+
+            // Restricción de fecha: Mínimo hoy y ahora mismo
+            const ahora = new Date();
+            ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+            document.getElementById('fecha_input').min = ahora.toISOString().slice(0, 16);
+
             new bootstrap.Modal(document.getElementById('modalCita')).show();
         }
     </script>

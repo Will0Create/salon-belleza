@@ -165,6 +165,9 @@ DATABASES = {
         conn_max_age=600
     )
 }
+CSRF_TRUSTED_ORIGINS = [
+    'https://salon-belleza-3v95.onrender.com',
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
