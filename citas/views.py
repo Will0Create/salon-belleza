@@ -29,14 +29,14 @@ def login_cliente(request):
             user = form.get_user()
             login(request, user)
             
-            # Lógica de redirección inteligente:
+            # Redirección inteligente
             if user.is_superuser or user.is_staff:
-                return redirect('/admin/') # Administradores al panel de Django
+                return redirect('/admin/') 
             
-            return redirect('panel_cliente') # Clientes a tu panel
+            return redirect('panel_cliente')
     else:
         form = AuthenticationForm()
-        # Añadimos clases de Bootstrap para que se vea bien
+        # Clases de Bootstrap para los inputs
         form.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Tu usuario'})
         form.fields['password'].widget.attrs.update({'class': 'form-control', 'placeholder': '********'})
         
@@ -46,16 +46,9 @@ def login_cliente(request):
 
 @login_required
 def panel_cliente(request):
-    # Obtenemos las citas del usuario actual
     citas = Cita.objects.filter(cliente=request.user).order_by('-fecha_hora')
-    # Obtenemos todos los servicios para el resumen
     servicios = Servicio.objects.all() 
-    
-    context = {
-        'citas': citas,
-        'servicios': servicios,
-    }
-    return render(request, 'citas/panel.html', context)
+    return render(request, 'citas/panel.html', {'citas': citas, 'servicios': servicios})
 
 @login_required
 def catalogo_servicios(request):
@@ -73,7 +66,6 @@ def mis_citas(request):
 def agendar_cita(request):
     if request.method == 'POST':
         form = CitaForm(request.POST)
-        # Pasamos el usuario al formulario para sus validaciones internas
         form.user = request.user 
         
         if form.is_valid():
@@ -83,7 +75,6 @@ def agendar_cita(request):
             cita.save()
             messages.success(request, "¡Cita agendada exitosamente!")
         else:
-            # Procesamos errores de validación (como la fecha pasada)
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{error}")
@@ -92,19 +83,27 @@ def agendar_cita(request):
 
 @login_required
 def eliminar_cita(request, cita_id):
-    # Buscamos la cita asegurándonos que pertenezca al usuario logueado
     cita = get_object_or_404(Cita, id=cita_id, cliente=request.user)
-    
-    # Solo permitir eliminar si está pendiente
     if cita.estado == 'P':
         cita.delete()
         messages.success(request, "La cita ha sido cancelada exitosamente.")
     else:
-        messages.error(request, "No se puede cancelar una cita que ya ha sido confirmada o finalizada.")
-    
+        messages.error(request, "No se puede cancelar una cita confirmada.")
     return redirect('mis_citas')
+
+# --- FUNCIÓN DE EMERGENCIA PARA SUPERUSER ---
+
 def crear_admin_temporal(request):
-    if not User.objects.filter(username='william_admin').exists():
-        User.objects.create_superuser('william_admin', 'tu@email.com', 'ClaveDificil123')
-        return HttpResponse("Superusuario creado con éxito.")
-    return HttpResponse("El usuario ya existe.")
+    # Usamos 'get_or_create' para que no falle si ya existe
+    user, created = User.objects.get_or_create(username='william_admin')
+    
+    # Forzamos la contraseña y los permisos de jefe
+    user.set_password('Salon2026!') 
+    user.is_superuser = True
+    user.is_staff = True
+    user.save()
+    
+    if created:
+        return HttpResponse("¡Superusuario 'william_admin' creado exitosamente!")
+    else:
+        return HttpResponse("¡La contraseña de 'william_admin' ha sido actualizada a 'Salon2026!'!")
