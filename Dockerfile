@@ -19,6 +19,6 @@ COPY . /app/
 # Exponemos el puerto 8000 (típico de Django)
 EXPOSE 8000
 
-# Comando para arrancar la app con Gunicorn
-# Reemplaza 'tu_proyecto' por el nombre de la carpeta donde está tu settings.py
-CMD python manage.py migrate && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
+CMD python manage.py migrate && \
+    python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@example.com', 'admin1234')" && \
+    gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
