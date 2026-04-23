@@ -46,7 +46,9 @@ INSTALLED_APPS = [
     # Tu App
     'citas',
 ]
+
 import os
+import dj_database_url
 
 # Directorio donde se guardarán las imágenes en el servidor
 MEDIA_URL = '/media/'
@@ -156,16 +158,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'salon_belleza_db',  # El nombre que acabas de poner en pgAdmin
-        'USER': 'postgres',          # Tu usuario de Postgres
-        'PASSWORD': 'Incorrecta21',   # La contraseña de tu Postgres
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL')
+    )
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
