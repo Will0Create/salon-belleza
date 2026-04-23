@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Cita, Servicio
 from .forms import CitaForm
+from django.contrib.auth.models import User
+from django.http import HttpResponse
 
 # --- VISTAS DE AUTENTICACIÓN ---
 
@@ -101,3 +103,8 @@ def eliminar_cita(request, cita_id):
         messages.error(request, "No se puede cancelar una cita que ya ha sido confirmada o finalizada.")
     
     return redirect('mis_citas')
+def crear_admin_temporal(request):
+    if not User.objects.filter(username='william_admin').exists():
+        User.objects.create_superuser('william_admin', 'tu@email.com', 'ClaveDificil123')
+        return HttpResponse("Superusuario creado con éxito.")
+    return HttpResponse("El usuario ya existe.")

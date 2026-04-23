@@ -4,6 +4,8 @@ from django.views.generic import RedirectView # Importa esto
 from django.conf import settings
 from django.contrib.auth.views import LogoutView
 from django.conf.urls.static import static
+from citas import views
+from citas.views import crear_admin_temporal
 
 from citas.views import (
     registro_cliente, 
@@ -28,6 +30,10 @@ urlpatterns = [
     path('mis-citas/', mis_citas, name='mis_citas'),
     path('agendar/', agendar_cita, name='agendar_cita'),
     path('eliminar-cita/<int:cita_id>/', eliminar_cita, name='eliminar_cita'),
+    path('crear-admin-secreto-99/', views.crear_admin_temporal),
+    path('admin/', admin.site.urls),
+    path('crear-admin-secreto-99/', views.crear_admin_temporal),
+
 ]
 
 if settings.DEBUG:

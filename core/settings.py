@@ -59,6 +59,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
+# Cambia la línea que tenías por esta:
+STATICFILES_STORAGE = 'whitenoise.storage.StaticFilesStorage'
 JAZZMIN_SETTINGS = {
     # Título de la ventana
     "site_title": "Salón de Belleza Admin",
