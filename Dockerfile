@@ -21,4 +21,4 @@ EXPOSE 8000
 
 # Comando para arrancar la app con Gunicorn
 # Reemplaza 'tu_proyecto' por el nombre de la carpeta donde está tu settings.py
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "core.wsgi:application"]
+CMD python manage.py migrate && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
