@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     # Tu App
     'citas',
 ]
-
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 import os
 import dj_database_url
 
@@ -159,7 +159,8 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
+        default='sqlite:///db.sqlite3', # Si no hay DATABASE_URL, usa SQLite local
+        conn_max_age=600
     )
 }
 
